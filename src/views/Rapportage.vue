@@ -38,6 +38,7 @@
 
 <script>
 // @ is an alias to /src
+import {HTTP} from '@/assets/scripts/http-common.js';
 import vuetable from 'vuetable-2'
 import _ from 'lodash'
 
@@ -67,6 +68,16 @@ export default {
 		}
 	},
 	methods: {
+		getAllData: function(){
+			HTTP.get(`data`)
+			.then((response) => {		
+				console.log(response.data)		
+				this.scans = response.data.scans
+			})
+			.catch((errors) => {
+				console.log(errors)
+			})
+		},
 		setTableData: function(){
 			var newHeader = _.concat(["datum"], this.checkedVehicle)
 			console.log(newHeader)
