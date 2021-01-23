@@ -5,7 +5,7 @@
 				<div class="dashboard-block">
 					<select v-model="timespan">
 						<option value="today">Vandaag</option>
-						<option value="week">Deze weel</option>
+						<option value="week">Deze week</option>
 						<option value="month">Deze maand</option>
 						<option value="year">Dit jaar</option>
 					</select>
@@ -45,6 +45,7 @@ export default {
 		return {
 			scans: null,
 			ranged_scans: null,
+			current_data: [],
 			linedata: {
 				lineoptions: {
 					chart: {
@@ -61,7 +62,7 @@ export default {
 							text: ''
 						},
 						min: 0,
-						max: 200
+						max: 1000
 					},
 					title: {
 						text: '',
@@ -128,7 +129,7 @@ export default {
 			options.xaxis.categories = this.categories[this.timespan]
 			options.xaxis.title.text = this.timespan
 			options.yaxis.min = 0
-			options.yaxis.max = 200
+			options.yaxis.max = 1000
 			options.yaxis.title.text = 'Aantal'
 			options.title.text = 'Aantal voertuigen'
 			options.title.align = 'left'
@@ -191,37 +192,52 @@ export default {
 			})
 		},
 		groupBy: function(array) {
-			var data = []
 			var label = ['Car','Bus','Truck','Cyclist','Pedestrian']	
-			data = new Array(label.length).fill(new Array(24).fill(0))
+			this.current_data = new Array(label.length)
+			switch(this.timespan){
+				case 'today':
+					this.current_data.fill(new Array(this.categories[this.timespan].length).fill(0))
+					console.log(this.current_data)
+					break
+				case 'week':					
+					this.current_data.fill(new Array(this.categories[this.timespan].length).fill(0))
+					break
+				case 'month':
+					this.current_data.fill(new Array(this.categories[this.timespan].length).fill(0))
+					break
+				case 'year':
+					this.current_data.fill(new Array(this.categories[this.timespan].length).fill(0))
+					break
+				default:
+					break
+			}
+			console.log(array)
 			for(var i = 0; i < array.length; i++){
 				var scan = array[i]
-				console.log(data[array[i].vehicle_id])
-				console.log(array[i].vehicle_id)
 				switch(this.timespan){
 					case 'today':
-						data[scan.vehicle_id-1][moment(scan.timestamp).hour()] += scan.vehicle_amount
-						console.log(data)
+						console.log(scan)
+						console.log(scan.vehicle_id-1, moment(scan.timestamp).hour()-1 , this.current_data[scan.vehicle_id-1][moment(scan.timestamp).hour()-1])
+						this.current_data[scan.vehicle_id-1][moment(scan.timestamp).hour()-1] += scan.vehicle_amount
 						break
 					case 'week':					
-						data[array[i].vehicle_id-1][moment(array[i].timestamp).isoWeekday()] += array[i].vehicle_amount
+						this.current_data[array[i].vehicle_id-1][moment(array[i].timestamp).isoWeekday()] += array[i].vehicle_amount
 						break
 					case 'month':
-						data[array[i].vehicle_id-1][moment(array[i].timestamp).date()] += array[i].vehicle_amount
+						this.current_data[array[i].vehicle_id-1][moment(array[i].timestamp).date()] += array[i].vehicle_amount
 						break
 					case 'year':
-						data[array[i].vehicle_id-1][moment(array[i].timestamp).month()+1] += array[i].vehicle_amount
+						this.current_data[array[i].vehicle_id-1][moment(array[i].timestamp).month()+1] += array[i].vehicle_amount
 						break
 					default:
 						break
 				}
 			}
-			console.log(data)
 			var processed = []
-			for(var x = 0; x < data.length; x++){
+			for(var x = 0; x < this.current_data.length; x++){
 				processed.push({
 					name: label[x],
-					data: data[x]
+					data: this.current_data[x]
 				})
 			}
 			return processed			
@@ -230,9 +246,6 @@ export default {
 	created: function () {
 		this.getScansByRangedDate(moment().format('YYYY-MM-DD'), moment(moment()).add(1, 'days').format('YYYY-MM-DD'))
 		this.getAllData()
-		this.setLinedata()
-		this.setDonutdata()
-		this.setTableData()
     }
 	
 }
