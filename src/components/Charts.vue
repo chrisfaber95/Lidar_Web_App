@@ -87,6 +87,7 @@ export default {
 				return this.data.lineseries
 			}			
 			else if(this.type == "donut"){
+				console.log(this.data)
 				return this.data.donutseries
 			}
 			else{

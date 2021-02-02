@@ -12,7 +12,7 @@
 			<input type="checkbox" id="vrachtwagen" value="vrachtwagen" v-model="checkedVehicle"></div>
 		</div>
 		<span>Periode:</span>
-		<datetime type="datetime" v-model="startdate"></datetime> <p>tot</p> <datetime type="datetime" v-model="enddate"></datetime>
+		<datetime v-model="startdate" type='date'></datetime> <p>tot</p> <datetime type="date" v-model="enddate"></datetime>
 		Exporteren naar:
 		<select v-model="selectedExport">
 			<option disabled value="">Selecteer:</option>
@@ -40,12 +40,15 @@
 // @ is an alias to /src
 import {HTTP} from '@/assets/scripts/http-common.js';
 import vuetable from 'vuetable-2'
+import { Datetime } from 'vue-datetime'
 import _ from 'lodash'
+import moment from 'moment'
 
 export default {
 	name: 'Dashboard',
 	components: {
-		vuetable
+		vuetable,
+		datetime: Datetime
 	},
 	data: function() {
 		return {
@@ -54,7 +57,8 @@ export default {
 			checkedVehicle: [],
 			selectedExport: "",
 			data:[],
-			header: []
+			header: [],
+			ranged_scans: null
 		}
 	},
 	computed: {
@@ -65,6 +69,16 @@ export default {
 	watch:{
 		checkedVehicle: function(){
 			this.reloadTable()
+		},
+		enddate: function(){
+			if(moment(this.startdate) < moment(this.startdate) && moment(this.startdate) != null && moment(this.startdate) != null){			
+				this.getScansByRangedDate(this.startdate, this.enddate)
+			}
+		},
+		startdate: function(){
+			if(moment(this.startdate) < moment(this.startdate) && moment(this.startdate) != null && moment(this.startdate) != null){			
+				this.getScansByRangedDate(this.startdate, this.enddate)
+			}
 		}
 	},
 	methods: {
@@ -78,68 +92,25 @@ export default {
 				console.log(errors)
 			})
 		},
+		getScansByRangedDate: function(starttime, endtime){
+			console.log(starttime, endtime)
+			if(moment(starttime) < moment(endtime) && moment(starttime) != null && moment(endtime) != null){
+				HTTP.get(`data/${starttime}/endtime:${endtime}`)
+				.then((response) => {				
+					console.log(JSON.parse(response.data.scans))
+					this.ranged_scans = JSON.parse(response.data.scans)
+				})
+				.catch((errors) => {
+					console.log(errors)
+				})
+			}
+		},
 		setTableData: function(){
 			var newHeader = _.concat(["datum"], this.checkedVehicle)
 			console.log(newHeader)
 			this.header = newHeader
 			
-			this.data = [
-				{	
-					datum: "Jan",
-					fiets: this.randomizedArray(),
-					auto: this.randomizedArray(),
-					vrachtwagen: this.randomizedArray(),
-				},
-				{	
-					datum: "Feb",
-					fiets: this.randomizedArray(),
-					auto: this.randomizedArray(),
-					vrachtwagen: this.randomizedArray(),
-				},
-				{	
-					datum: "Mar",
-					fiets: this.randomizedArray(),
-					auto: this.randomizedArray(),
-					vrachtwagen: this.randomizedArray(),
-				},
-				{	
-					datum: "Apr",
-					fiets: this.randomizedArray(),
-					auto: this.randomizedArray(),
-					vrachtwagen: this.randomizedArray(),
-				},
-				{	
-					datum: "May",
-					fiets: this.randomizedArray(),
-					auto: this.randomizedArray(),
-					vrachtwagen: this.randomizedArray(),
-				},
-				{	
-					datum: "Jun",
-					fiets: this.randomizedArray(),
-					auto: this.randomizedArray(),
-					vrachtwagen: this.randomizedArray(),
-				},
-				{	
-					datum: "Jul",
-					fiets: this.randomizedArray(),
-					auto: this.randomizedArray(),
-					vrachtwagen: this.randomizedArray(),
-				},
-				{	
-					datum: "Aug",
-					fiets: this.randomizedArray(),
-					auto: this.randomizedArray(),
-					vrachtwagen: this.randomizedArray(),
-				},
-				{	
-					datum: "Sep",
-					fiets: this.randomizedArray(),
-					auto: this.randomizedArray(),
-					vrachtwagen: this.randomizedArray(),
-				},
-				
-			]
+			this.data = []
 		},
 		randomizedArray: function(){
 			this.array = Math.floor(Math.random() * 200)

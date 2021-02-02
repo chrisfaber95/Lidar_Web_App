@@ -9,26 +9,24 @@
 				:per-page="10"
 			></vuetable>
 		</div>
-		{{data}}
 	</div>
 </template>
 
 <script>
 // @ is an alias to /src
-import _ from 'lodash'
 import vuetable from 'vuetable-2'
 
 export default {
 	name: 'Table',
 	props: [
-		'data'
+		'data',
+		'header'
 	],
 	components: {
 		vuetable
 	},
 	data: function() {
 		return {
-			header: []
 		}
 	},
 	computed: {
@@ -44,7 +42,7 @@ export default {
 	methods:{
 		
 		setTableData: function(){
-			var newHeader = _.concat(["datum"], this.checkedVehicle)
+			var newHeader = this.header
 			console.log(this.data)
 			console.log(newHeader)
 			this.header = newHeader

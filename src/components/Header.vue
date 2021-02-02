@@ -17,7 +17,7 @@
 			</div>
 		</div>		
 		<div id="logout">
-			<router-link to="/logout" tag="b-nav-item" v-if="menuopen">Naam.........Uitloggen</router-link>
+			<!--<router-link to="/logout" tag="b-nav-item" v-if="menuopen">Naam.........Uitloggen</router-link>-->
 		</div>
 	</div>
 </template>
@@ -128,4 +128,7 @@ h1{
    background-color: #b8b8b8;
    cursor: pointer;
  }
+.v-application a{
+	color: white !important;
+}
 </style>

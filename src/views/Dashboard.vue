@@ -14,15 +14,14 @@
 			</div>
 			<div class="col-4">
 				<div class="dashboard-block">
-					<h2>Tabellen</h2>
-					<Table :data.sync="tabledata" ref="table" />
+					<Chart charttype="donut" :data.sync="donutdata" ref="donutchart"/>
 				</div>
 			</div>
 			<div class="col-5">
 				<div class="dashboard-block">
-					<Chart charttype="donut" :data.sync="donutdata" ref="donutchart"/>
+					<h2>Tabellen</h2>
+					<Table :data.sync="table_data" :header.sync="table_header" ref="table" />
 				</div>
-				<button @click="changedata()">Click</button>
 			</div>
 		</div>
 	</div>
@@ -46,6 +45,7 @@ export default {
 			scans: null,
 			ranged_scans: null,
 			current_data: [],
+			table_data: [],
 			linedata: {
 				lineoptions: {
 					chart: {
@@ -83,10 +83,11 @@ export default {
 			timespan: 'today',
 			categories: {
 				today: Array.from(Array(24).keys()),
-				week: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
+				week: ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"],
 				month: Array.from(Array(new Date(new Date().getFullYear(), new Date().getMonth() + 1, 0).getDate()).keys()),
 				year: ['Jan', 'Feb', 'Mar','Apr', 'Mei', 'Jun','Jul', 'Aug', 'Sep', 'Okt', 'Nov', 'Dec']
-			}
+			},
+			table_header:['Datum', 'Car','Truck','Cyclist','Pedestrian','Bus']
 		}
 	},
 	computed: {
@@ -96,6 +97,27 @@ export default {
 	},
 	watch:{
 		timespan: function(){
+			var start
+			var end
+			switch(this.timespan){
+				case "today":
+					start = moment().format('YYYY-MM-DD')
+					end = moment(moment()).add(1, 'days').format('YYYY-MM-DD')
+					break;
+				case "week":					
+					start = moment().startOf('isoWeek').format('YYYY-MM-DD')
+					end = moment().endOf('isoWeek').format('YYYY-MM-DD')
+					break;
+				case "month":
+					start = moment().startOf('month').format('YYYY-MM-DD')
+					end = moment().endOf('month').format('YYYY-MM-DD')
+					break;
+				case "year":
+					start = moment().startOf('year').format('YYYY-MM-DD')
+					end = moment().endOf('year').format('YYYY-MM-DD')
+					break;
+			}
+			this.getScansByRangedDate(start, end)
 			this.setLinedata()
 			this.setDonutdata()
 			this.setTableData()
@@ -119,12 +141,10 @@ export default {
 		},
 		setLinedata: function(){
 			var options = this.linedata.lineoptions
-				console.log(this.ranged_scans)
 				var serie = []
 				if(this.ranged_scans != null){
 					serie = this.groupBy(this.ranged_scans)
 				}		
-			console.log(serie)
 			options.chart.id = ''
 			options.xaxis.categories = this.categories[this.timespan]
 			options.xaxis.title.text = this.timespan
@@ -133,12 +153,23 @@ export default {
 			options.yaxis.title.text = 'Aantal'
 			options.title.text = 'Aantal voertuigen'
 			options.title.align = 'left'
-			console.log(this.linedata)
 			this.linedata.lineseries = serie
 			
 			
 		},
 		setDonutdata: function(){
+			var serie = this.groupBy(this.ranged_scans)
+			var donut = []
+				console.log(serie)
+			for(var p = 0; p < serie.length; p++){
+				var result = 0;
+					console.log(serie[p])
+				for(var j = 0; j < serie[p].data.length; j++){
+					result += parseInt(serie[p].data[j]);
+				}
+				donut.push(result)
+				console.log(donut)
+			}
 			this.donutdata = {
 				donutoptions: {
 					chart: {
@@ -156,12 +187,26 @@ export default {
 							show: false
 						}
 					},
+					labels: ['Car','Truck','Cyclist','Pedestrian','Bus']
 				},
-				donutseries: this.groupBy(this.ranged_scans)
+				donutseries: donut
 			}
 		},
 		setTableData:function(){
-			
+			//var label = ['Datum', 'Car','Bus','Truck','Cyclist','Pedestrian']
+			var grouped_data = this.groupBy(this.ranged_scans)
+			this.table_data = []
+			for(var y = 0; y < this.categories[this.timespan].length; y++){
+				var scans = {
+						"Datum": this.categories[this.timespan][y],
+						"Car": grouped_data[0].data.[y],
+						"Truck": grouped_data[1].data.[y],
+						"Cyclist": grouped_data[2].data.[y],
+						"Pedestrian": grouped_data[3].data.[y],						
+						"Bus": grouped_data[4].data.[y],
+					}
+				this.table_data.push(scans)
+			}
 		},
 		randomizedArray: function(){
 			switch(this.timespan){
@@ -192,49 +237,35 @@ export default {
 			})
 		},
 		groupBy: function(array) {
-			var label = ['Car','Bus','Truck','Cyclist','Pedestrian']	
-			this.current_data = new Array(label.length)
-			switch(this.timespan){
-				case 'today':
-					this.current_data.fill(new Array(this.categories[this.timespan].length).fill(0))
-					console.log(this.current_data)
-					break
-				case 'week':					
-					this.current_data.fill(new Array(this.categories[this.timespan].length).fill(0))
-					break
-				case 'month':
-					this.current_data.fill(new Array(this.categories[this.timespan].length).fill(0))
-					break
-				case 'year':
-					this.current_data.fill(new Array(this.categories[this.timespan].length).fill(0))
-					break
-				default:
-					break
-			}
-			console.log(array)
+			var label = ['Car','Truck','Cyclist','Pedestrian','Bus']	
+			this.current_data = []
+			this.current_data[0] = new Array(this.categories[this.timespan].length).fill(0)
+			this.current_data[1] = new Array(this.categories[this.timespan].length).fill(0)
+			this.current_data[2] = new Array(this.categories[this.timespan].length).fill(0)
+			this.current_data[3] = new Array(this.categories[this.timespan].length).fill(0)
+			this.current_data[4] = new Array(this.categories[this.timespan].length).fill(0)
+			
 			for(var i = 0; i < array.length; i++){
 				var scan = array[i]
 				switch(this.timespan){
 					case 'today':
-						console.log(scan)
-						console.log(scan.vehicle_id-1, moment(scan.timestamp).hour()-1 , this.current_data[scan.vehicle_id-1][moment(scan.timestamp).hour()-1])
 						this.current_data[scan.vehicle_id-1][moment(scan.timestamp).hour()-1] += scan.vehicle_amount
 						break
 					case 'week':					
-						this.current_data[array[i].vehicle_id-1][moment(array[i].timestamp).isoWeekday()] += array[i].vehicle_amount
+						this.current_data[scan.vehicle_id-1][moment(scan.timestamp).isoWeekday()-1] += scan.vehicle_amount
 						break
 					case 'month':
-						this.current_data[array[i].vehicle_id-1][moment(array[i].timestamp).date()] += array[i].vehicle_amount
+						this.current_data[scan.vehicle_id-1][moment(scan.timestamp).date()-1] += scan.vehicle_amount
 						break
 					case 'year':
-						this.current_data[array[i].vehicle_id-1][moment(array[i].timestamp).month()+1] += array[i].vehicle_amount
+						this.current_data[scan.vehicle_id-1][moment(scan.timestamp).month()] += scan.vehicle_amount
 						break
 					default:
 						break
 				}
 			}
 			var processed = []
-			for(var x = 0; x < this.current_data.length; x++){
+			for(var x = 0; x < this.current_data.length; x++){		
 				processed.push({
 					name: label[x],
 					data: this.current_data[x]
